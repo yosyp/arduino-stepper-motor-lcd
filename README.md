@@ -5,7 +5,7 @@
 ### 
 
 ### Parts List
-| Part                                                                                                                                                          | Qty | Price ($) |
+| *Part*                                                                                                                                                          | *Qty* | *Price* `($)` |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------  | -----: | ----------: |
 | [Arduino Uno R3 (Atmega328 - assembled)](https://www.adafruit.com/product/50)                                                                                 |   1 |     24.95 |
 | [Adafruit Motor/Stepper/Servo Shield for Arduino v2 Kit - v2.3](https://www.adafruit.com/product/1438)                                                        |   1 |     19.95 |
@@ -20,8 +20,7 @@
 | Switch single pole double throw, breadboard mountable                                                                                                         |   2 |    ------ |
 | 10 kOhm resistors (brown-black-gold-yellow)                                                                                                                   |   2 |    ------ |
 | Misc. length breadboard jumper wires                                                                                                                          |  10 |    ------ |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------  | -----: | ----------: |
-| Total:                                                                                                                                                        |  -- |    119.89 |
+| *Total:*                                                                                                                                                        |  -- |    *119.89* |
 
 
 ### Schematic Diagram
