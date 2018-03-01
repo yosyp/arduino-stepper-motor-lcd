@@ -15,13 +15,20 @@
 #include <LiquidCrystal.h>
 #include <Wire.h>
 
-float max_v = 100.0; // Maximum stepper motor velocity
-float max_a = 100.0; // Maximum stepper motor acceleration
+float max_v = 10000.0; // Maximum stepper motor velocity
+float max_a = 10000.0; // Maximum stepper motor acceleration
 
-int PotPinL = A0; // Pin for left potentiometer knob (analog)
-int PotPinR = A1; // Pin for right potentionmeter knob (analog)
+int PotPinL = A0;  // Pin for left potentiometer knob (analog)
+int PotPinR = A1;  // Pin for right potentionmeter knob (analog)
 int SysSwitch = 6; // Pin for system toggle switch, turns motors on/off (digital)
 int DirSwitch = 5; // Pin for direction toggle switch, same or opposite directions (digital)
+
+int calibrationTime = 7500; // Startup calibration time before main sequence (milliseconds)
+int potRMax = 1;
+int potRMin = 100;
+int potLMax = 1;
+int potLMin = 100;
+
 
 int SysRead, DirRead;
 int PotReadL, PotReadR;
@@ -34,14 +41,15 @@ int SysPrev = LOW, DirPrev = LOW;
 
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12); // Initialize LCD pins
 
-Adafruit_MotorShield AFMSbot(0x61); // Rightmost jumper closed
-Adafruit_MotorShield AFMStop(0x60); // Default address, no jumpers
+Adafruit_MotorShield AFMSL = Adafruit_MotorShield(0x61);
+Adafruit_MotorShield AFMSR = Adafruit_MotorShield(0x60);
 
-Adafruit_StepperMotor *myStepperL = AFMStop.getStepper(200, 1);
-Adafruit_StepperMotor *myStepperR = AFMStop.getStepper(200, 2);
+Adafruit_StepperMotor *myStepperL = AFMSL.getStepper(200, 1);
+Adafruit_StepperMotor *myStepperR = AFMSR.getStepper(200, 2);
+
 
 void forwardStepL() { myStepperL->onestep(FORWARD, DOUBLE); }
-void forwardStepR() { myStepperR->onestep(FORWARD, DOUBLE); } 
+void forwardStepR() { myStepperR->onestep(FORWARD, DOUBLE); }
 void backwardStepL() { myStepperL->onestep(BACKWARD, DOUBLE); }
 void backwardStepR() { myStepperR->onestep(BACKWARD, DOUBLE); }
 
@@ -49,18 +57,25 @@ AccelStepper stepperL(forwardStepL, backwardStepL);
 AccelStepper stepperR(forwardStepR, backwardStepR);
 
 void setup() {
-  AFMSbot.begin(); // Start the bottom shield
-  AFMStop.begin(); // Start the top shield
+  //  Serial.begin(57600);
+  AFMSL.begin(); // Start the bottom shield
+  AFMSR.begin(); // Start the top shield
+  TWBR = ((F_CPU /400000l) - 16) / 2; // Change the i2c clock to 400KHz
+
+  stepperL.setMaxSpeed(max_v);
+  stepperR.setMaxSpeed(max_v);
+
+  stepperL.setAcceleration(max_a);
+  stepperR.setAcceleration(max_a);
+
+  //  stepperL.moveTo(50000);
+  //  stepperR.moveTo(50000);  
   
   pinMode(SysSwitch, INPUT); // Global motor on/off switch
   pinMode(DirSwitch, INPUT); // Motor direction switch
   pinMode(PotPinL, INPUT);   // Left potentiometer knob
   pinMode(PotPinR, INPUT);   // Right potentiometer knob
 
-  stepperL.setMaxSpeed(max_v);
-  stepperL.setAcceleration(max_a);
-  stepperR.setMaxSpeed(max_v);
-  stepperR.setAcceleration(max_a);  
   /*
    * Set up the LCD's number of columns and rows.
    * LCD Layout is as follows:
@@ -72,17 +87,16 @@ void setup() {
    * ********************************************
    */
   lcd.begin(16, 2);
-  lcd.setCursor(0, 1);
-  lcd.print("L:");
-  lcd.setCursor(9, 1);
-  lcd.print("R:");
-  lcd.setCursor(4, 1);
-  lcd.print("rpm");
-  lcd.setCursor(13, 1);
-  lcd.print("rpm");
+  lcd.setCursor(0, 1);  lcd.print("L:");
+  lcd.setCursor(9, 1);  lcd.print("R:");
+  lcd.setCursor(4, 1);  lcd.print("rpm");
+  lcd.setCursor(13, 1); lcd.print("rpm");
 }
 
 void loop() {
+
+  calibratePotentiometers();
+  
   /*
    * Read the current system state (motors ON or OFF), and
    * switch state accordingly. Save previous state to compare.
@@ -135,20 +149,12 @@ void loop() {
    * Read and display current potentiometer values on LCD.
    * Values are cutoff to be between 0 and 99.
    */
-  PotReadL = analogRead(PotPinL) / 10;
-  if (PotReadL > 99)
-    PotReadL = 99;
-  PotReadR = analogRead(PotPinR) / 10;
-  if (PotReadR > 99)
-    PotReadR = 99;
-  lcd.setCursor(2, 1);
-  lcd.print("  ");
-  lcd.setCursor(2, 1);
-  lcd.print(PotReadL);
-  lcd.setCursor(11, 1);
-  lcd.print("  ");
-  lcd.setCursor(11, 1);
-  lcd.print(PotReadR);
+  PotReadL = map(analogRead(PotPinL), potLMin, potLMax, 0, 50);
+  PotReadR = map(analogRead(PotPinR), potRMin, potRMax, 0, 100);
+  lcd.setCursor(2, 1);  lcd.print("  ");
+  lcd.setCursor(2, 1);  lcd.print(PotReadL);
+  lcd.setCursor(11, 1); lcd.print("  ");
+  lcd.setCursor(11, 1); lcd.print(PotReadR);
 
   lcd.setCursor(7, 1);
   if ((millis() / 500) % 2 == 0) {
@@ -159,9 +165,44 @@ void loop() {
 
   printArrows(direction);
 
-  stepperL.run();
-  stepperR.run();
+  stepperR.moveTo(1000000);
+  stepperR.setSpeed(PotReadR);
+  stepperR.runSpeedToPosition();
+  /* if(PotReadR > 0) { */
+  /*   stepperR.setSpeed(PotReadR); */
+  /*   stepperR.run(); */
+  /* } */
+  //  stepperL.run();
+  //stepperR.run();  
 }
+
+/*
+ *
+ */
+void calibratePotentiometers() {
+  while(millis() < calibrationTime) {
+    lcd.setCursor(0,0); lcd.print("CALIBRATION");
+    PotReadR = analogRead(PotPinR);
+    PotReadL = analogRead(PotPinL);
+
+    if (PotReadR > potRMax) {
+      potRMax = PotReadR;
+    }
+
+    if (PotReadR < potRMin) {
+      potRMin = PotReadR;
+    }
+
+    if (PotReadL > potLMax) {
+      potLMax = PotReadL;
+    }
+
+    if (PotReadL < potLMin) {
+      potLMin = PotReadL;
+    }    
+  }
+}
+
 
 /*
  * Print direction arrows on first row
@@ -172,27 +213,20 @@ void printArrows(int direction) {
   int ttime = millis();
   if ((ttime / 300) % 2 == 0) {
     if (direction == 0) {
-      lcd.setCursor(0, 0);
-      lcd.print(">->->");
-      lcd.setCursor(11, 0);
-      lcd.print("->->-");
+      lcd.setCursor(0, 0);  lcd.print(">->->");
+      lcd.setCursor(11, 0); lcd.print("->->-");
     } else {
-      lcd.setCursor(0, 0);
-      lcd.print(">->->");
-      lcd.setCursor(11, 0);
-      lcd.print("-<-<-");
+      lcd.setCursor(0, 0);  lcd.print(">->->");
+      lcd.setCursor(11, 0); lcd.print("-<-<-");
     }
   } else {
     if (direction == 0) {
-      lcd.setCursor(0, 0);
-      lcd.print("->->-");
-      lcd.setCursor(11, 0);
-      lcd.print(">->->");
+      lcd.setCursor(0, 0);  lcd.print("->->-");
+      lcd.setCursor(11, 0); lcd.print(">->->");
     } else {
-      lcd.setCursor(0, 0);
-      lcd.print("->->-");
-      lcd.setCursor(11, 0);
-      lcd.print("<-<-<");
+      lcd.setCursor(0, 0);  lcd.print("->->-");
+      lcd.setCursor(11, 0); lcd.print("<-<-<");
     }
   }
 }
+
