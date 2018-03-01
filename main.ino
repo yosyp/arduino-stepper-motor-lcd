@@ -14,6 +14,7 @@
 #include <Adafruit_MotorShield.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
+#include <ResponsiveAnalogRead.h>
 
 float max_v = 10000.0; // Maximum stepper motor velocity
 float max_a = 10000.0; // Maximum stepper motor acceleration
@@ -45,12 +46,14 @@ int SysPrev = LOW, DirPrev = LOW;
 
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12); // Initialize LCD pins
 
+ResponsiveAnalogRead  potL(PotPinL, true);
+ResponsiveAnalogRead  potR(PotPinR, true);
+
 Adafruit_MotorShield AFMSL = Adafruit_MotorShield(0x61);
 Adafruit_MotorShield AFMSR = Adafruit_MotorShield(0x60);
 
 Adafruit_StepperMotor *myStepperL = AFMSL.getStepper(200, 1);
 Adafruit_StepperMotor *myStepperR = AFMSR.getStepper(200, 2);
-
 
 void forwardStepL() { myStepperL->onestep(FORWARD, DOUBLE); }
 void forwardStepR() { myStepperR->onestep(FORWARD, DOUBLE); }
@@ -99,7 +102,19 @@ void setup() {
 
 void loop() {
 
-  calibratePotentiometers();
+  /*
+   * Calibrate the potentiometers by manually finding min/max values
+   */
+  while (millis() < calibrationTime) {
+    calibratePotentiometers();
+  }
+  
+  /*
+   * Update the Responsive AnalogRead objects at every loop. 
+   * It stores the last few values and eliminates circuit noise from analogue values.
+   */ 
+  potL.update();
+  potR.update();
   
   /*
    * Read the current system state (motors ON or OFF), and
@@ -153,22 +168,22 @@ void loop() {
    * Read and display current potentiometer values on LCD.
    * Values are cutoff to be between 0 and 99.
    */
-  PotReadL = map(analogRead(PotPinL), potLMin, potLMax, 0, maxSteps); // Remaps min/max potentiometer values to stepper steps
+  PotReadL = map(potL.getValue(), potLMin, potLMax, 0, maxSteps); // Remaps min/max potentiometer values to stepper steps
   PotReadL = constrain(PotReadL, 0, maxSteps); // In case sensor value is out of range, constrain it.
 
-  PotReadR = map(analogRead(PotPinR), potRMin, potRMax, 0, maxSteps);
+  PotReadR = map(potR.getValue(), potRMin, potRMax, 0, maxSteps);
   PotReadR = constrain(PotReadR, 0, maxSteps);
 
   // speed() returns steps/second, convert to RPM:
   float stepperRSpeed = (stepperR.speed() / stepperSteps) * 60;
 
-  if ((millis() - lastUpdateTime) > 100) {
+  //  if ((millis() - lastUpdateTime) > 100) {
     lcd.setCursor(2, 1);  lcd.print("  ");
     lcd.setCursor(2, 1);  lcd.print(PotReadL);
     lcd.setCursor(11, 1); lcd.print("  ");
     lcd.setCursor(11, 1); lcd.print(stepperRSpeed);
-    lastUpdateTime = millis();
-  }  
+    //    lastUpdateTime = millis();
+    //a  }  
   lcd.setCursor(7, 1);
   if ((millis() / 500) % 2 == 0) {
     lcd.print("<>");
@@ -193,7 +208,6 @@ void loop() {
  *
  */
 void calibratePotentiometers() {
-  while(millis() < calibrationTime) {
     lcd.setCursor(0,0); lcd.print("CALIBRATION");
     PotReadR = analogRead(PotPinR);
     PotReadL = analogRead(PotPinL);
@@ -213,7 +227,6 @@ void calibratePotentiometers() {
     if (PotReadL < potLMin) {
       potLMin = PotReadL;
     }    
-  }
 }
 
 

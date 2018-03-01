@@ -31,6 +31,9 @@
 git clone https://github.com/adafruit/AccelStepper.git
 ```
 ```
+git clone https://github.com/dxinteractive/ResponsiveAnalogRead.git
+```
+```
 arduino --upload main.ino
 ```
 
