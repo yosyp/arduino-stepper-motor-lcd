@@ -23,6 +23,10 @@ int PotPinR = A1;  // Pin for right potentionmeter knob (analog)
 int SysSwitch = 6; // Pin for system toggle switch, turns motors on/off (digital)
 int DirSwitch = 5; // Pin for direction toggle switch, same or opposite directions (digital)
 
+int lastUpdateTime = 0; // LCD update time to RPM values
+int stepperSteps = 400; // Physical value of the stepper motor
+int maxSteps = 1200; // Maximum steps-per-minute of the stepper motor
+
 int calibrationTime = 7500; // Startup calibration time before main sequence (milliseconds)
 int potRMax = 1;
 int potRMin = 100;
@@ -149,13 +153,22 @@ void loop() {
    * Read and display current potentiometer values on LCD.
    * Values are cutoff to be between 0 and 99.
    */
-  PotReadL = map(analogRead(PotPinL), potLMin, potLMax, 0, 50);
-  PotReadR = map(analogRead(PotPinR), potRMin, potRMax, 0, 100);
-  lcd.setCursor(2, 1);  lcd.print("  ");
-  lcd.setCursor(2, 1);  lcd.print(PotReadL);
-  lcd.setCursor(11, 1); lcd.print("  ");
-  lcd.setCursor(11, 1); lcd.print(PotReadR);
+  PotReadL = map(analogRead(PotPinL), potLMin, potLMax, 0, maxSteps); // Remaps min/max potentiometer values to stepper steps
+  PotReadL = constrain(PotReadL, 0, maxSteps); // In case sensor value is out of range, constrain it.
 
+  PotReadR = map(analogRead(PotPinR), potRMin, potRMax, 0, maxSteps);
+  PotReadR = constrain(PotReadR, 0, maxSteps);
+
+  // speed() returns steps/second, convert to RPM:
+  float stepperRSpeed = (stepperR.speed() / stepperSteps) * 60;
+
+  if ((millis() - lastUpdateTime) > 100) {
+    lcd.setCursor(2, 1);  lcd.print("  ");
+    lcd.setCursor(2, 1);  lcd.print(PotReadL);
+    lcd.setCursor(11, 1); lcd.print("  ");
+    lcd.setCursor(11, 1); lcd.print(stepperRSpeed);
+    lastUpdateTime = millis();
+  }  
   lcd.setCursor(7, 1);
   if ((millis() / 500) % 2 == 0) {
     lcd.print("<>");
