@@ -49,6 +49,10 @@ ResponsiveAnalogRead potR(PotPinR, true);
 Adafruit_MotorShield AFMSbot(0x61);
 Adafruit_MotorShield AFMStop(0x60);
 
+/* Notice that we define two MotorShield variables, but for the steppers 
+ * only use AFMStop, which is the top shield. If stacking multiple motor
+ * shields, remember to map the steppers to the approapriate shield.
+ */ 
 Adafruit_StepperMotor *myStepperL = AFMStop.getStepper(200, 1);
 Adafruit_StepperMotor *myStepperR = AFMStop.getStepper(200, 2);
 
