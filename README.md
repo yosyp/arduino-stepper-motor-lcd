@@ -33,6 +33,12 @@ git clone https://github.com/adafruit/AccelStepper.git
 ```
 git clone https://github.com/dxinteractive/ResponsiveAnalogRead.git
 ```
+
+If using a external power source for the stepper motors, you can increase the maximum speed (RPM) of the stepper. Modify `arduino-src/hardware/arduino/avr/libraries/Wire/src/utility/twi.h:27:20` to read:
+```
+	#define TWI_FREQ 400000L
+```
+
 ```
 arduino --upload main.ino
 ```
