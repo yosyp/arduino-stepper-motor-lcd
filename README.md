@@ -27,11 +27,30 @@
 ### Schematic Diagram
 
 ### Compiling, uploading
+To use the the Arduino with the command line (CLI) instead of the Java applet, first clone the latest repo (or download the stable source) to some directory:
+```
+git clone https://github.com/arduino/Arduino.git
+```
+Next, navigate to the library directory:
+```
+cd arduino-nightly/libraries
+```
+Clone the following two libraries into the `library/` directory:
 ```
 git clone https://github.com/adafruit/AccelStepper.git
 ```
 ```
 git clone https://github.com/dxinteractive/ResponsiveAnalogRead.git
+```
+Then you can compile, verify, and upload with a single command:
+```
+arduino-nightly/arduino --upload main.ino
+```
+Note that you may need to allow the current user access to the proper `/dev/tty*` device as specified by the `~./arduino/preferences.txt` or `~./arduino15/preferences.txt` file, with the `serial.port=` parameter.
+
+To view messages printed using `Serial.print()` in the code, you can open the corresponding tty device with `cu`. Make sure that the baud rate matches the rate set in `setup()` using `Serial.begin(57600)`. 
+```
+cu -l /dev/ttyACM0 -s 57600
 ```
 
 If using a external power source for the stepper motors, you can increase the maximum speed (RPM) of the stepper. Modify `arduino-src/hardware/arduino/avr/libraries/Wire/src/utility/twi.h:27:20` to read:
@@ -39,12 +58,6 @@ If using a external power source for the stepper motors, you can increase the ma
 	#define TWI_FREQ 400000L
 ```
 
-```
-arduino --upload main.ino
-```
-```
-cu -l /dev/ttyACM0 -s 57600
-```
 
 ### Resources
 
