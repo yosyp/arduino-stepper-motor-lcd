@@ -16,23 +16,24 @@
 #include <ResponsiveAnalogRead.h>
 #include <Wire.h>
 
-int stepperSteps = 200;  // Physical value of the stepper motor
-float max_v = 100.0; // Maximum stepper motor velocity (steps)
-float max_a = 100.0; // Maximum stepper motor acceleration (steps)
+#define MAX_POTS 2
 
-int PotPinL = A0; // Pin for left potentiometer knob (analog)
-int PotPinR = A1; // Pin for right potentionmeter knob (analog)
+/* LCD pins depend on physical configuration */
+LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
+
+/* Analog IO pins */
+int PotentiometerPin[] = { A0, A1 }; // Potentiometer values (analog)
+
+/* Placeholders to store calibrated min/max of potentiometers */
+int potMax[] = {1, 1};
+int potMin[] = {100, 100};
+
+/* */
+int PotRead[MAX_POTS];
+
+/* Digital IO pins */
 int SysSwitch = 6; // Pin for system toggle switch, motors on/off (digital)
 int DirSwitch = 5; // Pin for direction toggle switch (digital)
-
-int calibrationTime = 7500; // Startup calibration time before main sequence (milliseconds)
-int potRMax = 1;
-int potRMin = 100;
-int potLMax = 1;
-int potLMin = 100;
-
-int SysRead, DirRead;
-int PotReadL, PotReadR;
 
 int direction = 0; // Will store rotation direction of two motors, passed to
                    // void printArrows()
@@ -41,18 +42,24 @@ int SysState, DirState; // Default state for system is off, motors not moving.
 int SysPrev = HIGH,
     DirPrev = LOW; // Default direction for two motors is both forward.
 
-LiquidCrystal lcd(7, 8, 9, 10, 11, 12); // Initialize LCD pins
+int SysRead, DirRead;
+int calibrationTime = 7500; // Startup calibration time before main loop (ms)
 
-ResponsiveAnalogRead potL(PotPinL, true);
-ResponsiveAnalogRead potR(PotPinR, true);
+int stepperSteps = 200; // Physical value of the stepper motor
+float max_v = 100.0;    // Maximum stepper motor velocity (steps)
+float max_a = 100.0;    // Maximum stepper motor acceleration (steps)
+
+ResponsiveAnalogRead *pot[MAX_POTS];
+//L(PotPinL, true);
+//ResponsiveAnalogRead potR(PotPinR, true);
 
 Adafruit_MotorShield AFMSbot(0x61);
 Adafruit_MotorShield AFMStop(0x60);
 
-/* Notice that we define two MotorShield variables, but for the steppers 
+/* Notice that we define two MotorShield variables, but for the steppers
  * only use AFMStop, which is the top shield. If stacking multiple motor
  * shields, remember to map the steppers to the approapriate shield.
- */ 
+ */
 Adafruit_StepperMotor *myStepperL = AFMStop.getStepper(200, 1);
 Adafruit_StepperMotor *myStepperR = AFMStop.getStepper(200, 2);
 
@@ -66,7 +73,11 @@ AccelStepper stepperR(forwardStepR, backwardStepR);
 
 void setup() {
 
-  pinMode(6, INPUT);
+  
+  for (int i=0; i<MAX_POTS; i++) {
+    pot[i] = new ResponsiveAnalogRead(PotentiometerPin[i], true);
+  }
+  
   //  Serial.begin(57600);
   AFMSbot.begin(); // Start the bottom shield
   AFMStop.begin(); // Start the top shield
@@ -83,8 +94,8 @@ void setup() {
 
   pinMode(SysSwitch, INPUT); // Global motor on/off switch
   pinMode(DirSwitch, INPUT); // Motor direction switch
-  pinMode(PotPinL, INPUT);   // Left potentiometer knob
-  pinMode(PotPinR, INPUT);   // Right potentiometer knob
+  pinMode(PotentiometerPin[0], INPUT);   // Left potentiometer knob
+  pinMode(PotentiometerPin[1], INPUT);   // Right potentiometer knob
 
   /*
    * Set up the LCD's number of columns and rows.
@@ -106,7 +117,7 @@ void setup() {
   lcd.print("rpm");
 }
 
-void loop() {  
+void loop() {
 
   // Calibrate the potentiometers by manually finding min/max values
   while (millis() < calibrationTime) {
@@ -118,8 +129,9 @@ void loop() {
    * It stores the last few values and eliminates circuit noise from analogue
    * values.
    */
-  potL.update();
-  potR.update();
+  for (int i=0; i<MAX_POTS; i++) {
+    pot[i].update();
+  }
 
   /*
    * Read the current system state (motors ON or OFF), and
@@ -157,15 +169,14 @@ void loop() {
    * Read and display current potentiometer values on LCD.
    * Values are cutoff to be between 0 and 99.
    */
-  PotReadL = map(potL.getValue(), potLMin, potLMax, 1,
-                 max_v); // Remaps min/max potentiometer values to stepper steps
-  PotReadL =
-      constrain(PotReadL, 1,
-                max_v); // In case sensor value is out of range, constrain it.
+  for (int i=0; i<MAX_POTS; i++) {
+    // Remaps min/max potentiometer values to stepper steps
+    PotRead[i] = map(pot[i]->getValue(), potMin[i], potMax[i], 1, max_v);
 
-  PotReadR = map(potR.getValue(), potRMin, potRMax, 1, max_v);
-  PotReadR = constrain(PotReadR, 1, max_v);
-
+    // In case sensor value is out of range, constrain it.
+    PotRead[i] = constrain(PotRead[i], 1, max_v);
+  }
+  
   // speed() returns steps/second, convert to RPM:
   int stepperRSpeed = (stepperR.speed() / stepperSteps) * 60;
   int stepperLSpeed = (stepperL.speed() / stepperSteps) * 60;
@@ -197,11 +208,10 @@ void loop() {
     stepperL.run();
     stepperR.run();
 
-    if (PotReadR <= 1) {
-      stepperR.setSpeed(0);
-    }
-    if (PotReadL <= 1) {
-      stepperL.setSpeed(0);
+    for (int i=0; i<MAX_POTS; i++) {
+      if (PotRead[i] <= 1) {
+        stepperR.setSpeed(0);
+      }
     }
   }
 }
@@ -212,23 +222,28 @@ void loop() {
 void calibratePotentiometers() {
   lcd.setCursor(0, 0);
   lcd.print("CALIBRATION");
-  PotReadR = analogRead(PotPinR);
-  PotReadL = analogRead(PotPinL);
+  PotRead[MAX_POTS];
 
-  if (PotReadR > potRMax) {
-    potRMax = PotReadR;
+  for (int i=0; i<MAX_POTS; i++) {
+    PotRead[i] = analogRead(PotentiometerPin[i]);
   }
 
-  if (PotReadR < potRMin) {
-    potRMin = PotReadR;
-  }
+  for (int i=0; i<MAX_POTS; i++) {  
+    if (PotRead[i] > potMax[i]) {
+      potMax[i] = PotRead[i];
+    }
 
-  if (PotReadL > potLMax) {
-    potLMax = PotReadL;
-  }
+    if (PotRead[i] < potMin[i]) {
+      potMin[i] = PotRead[i];
+    }
 
-  if (PotReadL < potLMin) {
-    potLMin = PotReadL;
+    if (PotRead[i] > potMax[i]) {
+      potMax[i] = PotRead[i];
+    }
+
+    if (PotRead[i] < potMin[i]) {
+      potMin[i] = PotRead[i];
+    }
   }
   lcd.setCursor(5, 0);
   lcd.print("      "); // Cleanup the "CALIBRATION" message left over.
