@@ -35,9 +35,12 @@ Next, navigate to the library directory:
 ```
 cd arduino-nightly/libraries
 ```
-Clone the following two libraries into the `library/` directory:
+Clone the following three libraries into the `library/` directory:
 ```
 git clone https://github.com/adafruit/AccelStepper.git
+```
+```
+git clone https://github.com/adafruit/Adafruit_Motor_Shield_V2_Library.git
 ```
 ```
 git clone https://github.com/dxinteractive/ResponsiveAnalogRead.git
