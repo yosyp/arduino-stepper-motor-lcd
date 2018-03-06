@@ -30,6 +30,7 @@ int potMin[] = {100, 100};
 
 /* */
 int PotRead[MAX_POTS];
+int stepperSpeed[MAX_POTS];
 
 /* Digital IO pins */
 int SysSwitch = 6; // Pin for system toggle switch, motors on/off (digital)
@@ -60,37 +61,35 @@ Adafruit_MotorShield AFMStop(0x60);
  * only use AFMStop, which is the top shield. If stacking multiple motor
  * shields, remember to map the steppers to the approapriate shield.
  */
-Adafruit_StepperMotor *myStepperL = AFMStop.getStepper(200, 1);
-Adafruit_StepperMotor *myStepperR = AFMStop.getStepper(200, 2);
+Adafruit_StepperMotor *myStepper[] = {
+  AFMStop.getStepper(200, 1),
+  AFMStop.getStepper(200, 2)
+};
 
-void forwardStepL() { myStepperL->onestep(FORWARD, DOUBLE); }
-void forwardStepR() { myStepperR->onestep(FORWARD, DOUBLE); }
-void backwardStepL() { myStepperL->onestep(BACKWARD, DOUBLE); }
-void backwardStepR() { myStepperR->onestep(BACKWARD, DOUBLE); }
+void forwardStep0() { myStepper[0]->onestep(FORWARD, DOUBLE); }
+void forwardStep1() { myStepper[0]->onestep(FORWARD, DOUBLE); }
+void backwardStep0() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
+void backwardStep1() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
 
-AccelStepper stepperL(forwardStepL, backwardStepL);
-AccelStepper stepperR(forwardStepR, backwardStepR);
+AccelStepper *stepper[MAX_POTS];
+
 
 void setup() {
-
-  
   for (int i=0; i<MAX_POTS; i++) {
     pot[i] = new ResponsiveAnalogRead(PotentiometerPin[i], true);
+    stepper[i] = new AccelStepper(
+        myStepper[i]->onestep(FORWARD, DOUBLE),
+        myStepper[i]->onestep(BACKWARD, DOUBLE));
+    stepper[i]->setMaxSpeed(max_v);
+    stepper[i]->setAcceleration(max_a);
+    stepper[i]->moveTo(24);
   }
-  
+
   //  Serial.begin(57600);
   AFMSbot.begin(); // Start the bottom shield
   AFMStop.begin(); // Start the top shield
   //  TWBR = ((F_CPU / 400000l) - 16) / 2; // Change the i2c clock to 400KHz
 
-  stepperL.setMaxSpeed(max_v);
-  stepperR.setMaxSpeed(max_v);
-
-  stepperL.setAcceleration(max_a);
-  stepperR.setAcceleration(max_a);
-
-  stepperL.moveTo(24);
-  stepperR.moveTo(50000);
 
   pinMode(SysSwitch, INPUT); // Global motor on/off switch
   pinMode(DirSwitch, INPUT); // Motor direction switch
@@ -130,7 +129,7 @@ void loop() {
    * values.
    */
   for (int i=0; i<MAX_POTS; i++) {
-    pot[i].update();
+    pot[i]->update();
   }
 
   /*
@@ -175,45 +174,46 @@ void loop() {
 
     // In case sensor value is out of range, constrain it.
     PotRead[i] = constrain(PotRead[i], 1, max_v);
-  }
-  
-  // speed() returns steps/second, convert to RPM:
-  int stepperRSpeed = (stepperR.speed() / stepperSteps) * 60;
-  int stepperLSpeed = (stepperL.speed() / stepperSteps) * 60;
 
-  lcd.setCursor(1, 1);
-  lcd.print("  ");
-  lcd.setCursor(1, 1);
-  lcd.print(stepperLSpeed);
-  lcd.setCursor(10, 1);
-  lcd.print("  ");
-  lcd.setCursor(10, 1);
-  lcd.print(stepperRSpeed);
+    // speed() returns steps/second, convert to RPM:
+    stepperSpeed[i] = (stepper[i]->speed() / stepperSteps) * 60;    
+  }
+
+  /* TODO: 
+   *  fix this using a struct to store positions of cursors for each
+   *  stepper 
+   */ 
+  /* lcd.setCursor(1, 1); */
+  /* lcd.print("  "); */
+  /* lcd.setCursor(1, 1); */
+  /* lcd.print(stepperLSpeed); */
+  /* lcd.setCursor(10, 1); */
+  /* lcd.print("  "); */
+  /* lcd.setCursor(10, 1); */
+  /* lcd.print(stepperRSpeed); */
 
   printArrows(direction);
 
-  if (SysState == LOW) {
-    stepperR.setSpeed(0);
-    stepperL.setSpeed(0);
-  } else {
+  for (int i = 0; i<MAX_POTS; i++) {
 
-    if (stepperL.distanceToGo() == 0) {
-      stepperL.moveTo(-stepperL.currentPosition());
-    }
-
-    if (stepperR.distanceToGo() == 0) {
-      stepperR.moveTo(-stepperR.currentPosition());
-    }
-
-    stepperL.run();
-    stepperR.run();
-
-    for (int i=0; i<MAX_POTS; i++) {
-      if (PotRead[i] <= 1) {
-        stepperR.setSpeed(0);
+    if (SysState == LOW) {
+      stepper[i]->setSpeed(0);
+    } else {
+      if (stepper[i]->distanceToGo() == 0) {
+        stepper[i]->moveTo(-stepper[i]->currentPosition());
       }
+      stepper[i]->run();
+
+      for (int i=0; i<MAX_POTS; i++) {
+        if (PotRead[i] <= 1) {
+          stepper[i]->setSpeed(0);
+        }
+      }
+
     }
   }
+
+  
 }
 
 /*
