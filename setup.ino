@@ -5,7 +5,7 @@ int serial_putchar(char c, FILE* f) {
 
 void setup() {
   Serial.begin(57600);
-  TWBR = ((F_CPU / 400000l) - 16) / 2; // Change the i2c clock to 400KHz
+  //  TWBR = ((F_CPU / 400000l) - 16) / 2; // Change the i2c clock to 400KHz
 
   fdev_setup_stream(&serial_stdout, serial_putchar, NULL, _FDEV_SETUP_WRITE);
   stdout = &serial_stdout;
@@ -20,7 +20,7 @@ void setup() {
     pot[i] = new ResponsiveAnalogRead(PotentiometerPin[i], true);
     stepper[i]->setMaxSpeed(max_v);
     stepper[i]->setAcceleration(max_a);
-    stepper[i]->moveTo(newPos);
+    stepper[i]->moveTo(14000000);
   }
 
 

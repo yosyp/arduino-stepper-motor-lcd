@@ -44,9 +44,9 @@ void setup() {
   stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
   
   for (int i=0;i<2;i++) {
-    stepper[i]->setMaxSpeed(100.0);
-    stepper[i]->setAcceleration(100.0);
-    stepper[i]->moveTo(24);
+    stepper[i]->setMaxSpeed(10000.0);
+    stepper[i]->setAcceleration(10000.0);
+    stepper[i]->moveTo(14000000);
   }        
   
   AFMSbot.begin(); // Start the bottom shield
@@ -57,18 +57,15 @@ void loop() {
 
   int sys = digitalRead(6);
 
-  // Change direction at the limits
-  if (stepper[0]->distanceToGo() == 0)
-    stepper[0]->moveTo(-stepper[0]->currentPosition());
-
-  if (stepper[1]->distanceToGo() == 0)
-    stepper[1]->moveTo(-stepper[1]->currentPosition());
-
-  if (sys == HIGH) {
-    stepper[0]->run();
-    stepper[1]->run();
-  } else {
-    stepper[0]->setSpeed(0);
-    stepper[1]->setSpeed(0);
+  for (int i=0; i<2; i++) {
+    if (stepper[i]->distanceToGo() == 0) {
+      stepper[i]->setCurrentPosition(0);
+      stepper[i]->moveTo(100);
+    }
+    if (sys == HIGH) {
+      stepper[i]->run();
+    } else {
+      stepper[i]->setSpeed(0);
+    }
   }
 }

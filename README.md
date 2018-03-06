@@ -51,7 +51,7 @@ arduino-nightly/arduino --upload main.ino
 ```
 Note that you may need to allow the current user access to the proper `/dev/tty*` device as specified by the `~./arduino/preferences.txt` or `~./arduino15/preferences.txt` file, with the `serial.port=` parameter.
 
-To view messages printed using `Serial.print()` in the code, you can open the corresponding tty device with `cu`. Make sure that the baud rate matches the rate set in `setup()` using `Serial.begin(57600)`. 
+To view messages printed using `Serial.print()` in the code, you can open the corresponding tty device with `cu`. Make sure that the baud rate matches the rate set in `setup()` using `Serial.begin(57600)`. To exit `cu`, type `~.`. This may end your SSH session if you are programming over SSH, in which case the escape character can also be `~~.`. 
 ```
 cu -l /dev/ttyACM0 -s 57600
 ```

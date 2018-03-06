@@ -48,8 +48,7 @@ int SysRead, DirRead;
 int calibrationTime = 10000; // Startup calibration time before main loop (ms)
 
 float stepperSteps = 200.0; // Physical value of the stepper motor
-int newPos = 1000;
-float max_v = 200.0;    // Maximum stepper motor velocity (steps)
+float max_v = 10000.0;    // Maximum stepper motor velocity (steps)
 float max_a = 10000.0;    // Maximum stepper motor acceleration (steps)
 
 long int timeout = calibrationTime + 1000;
@@ -66,10 +65,10 @@ Adafruit_MotorShield AFMStop(0x60);
 Adafruit_StepperMotor *myStepper[] = {AFMStop.getStepper(200, 1),
                                       AFMStop.getStepper(200, 2)};
 
-void forwardStep0() { myStepper[0]->onestep(FORWARD, SINGLE); }
-void forwardStep1() { myStepper[1]->onestep(FORWARD, SINGLE); }
-void backwardStep0() { myStepper[0]->onestep(BACKWARD, SINGLE); }
-void backwardStep1() { myStepper[1]->onestep(BACKWARD, SINGLE); }
+void forwardStep0() { myStepper[0]->onestep(FORWARD, DOUBLE); }
+void forwardStep1() { myStepper[1]->onestep(FORWARD, DOUBLE); }
+void backwardStep0() { myStepper[0]->onestep(BACKWARD, DOUBLE); }
+void backwardStep1() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
 
 AccelStepper *stepper[MAX_POTS];
 
@@ -140,10 +139,11 @@ void loop() {
     if (SysState == LOW) {
       stepper[i]->setSpeed(0);
     } else {
-      stepper[i]->setSpeed((int)stepperSpeed[i]);
+      //stepper[i]->setSpeed((int)stepperSpeed[i]);
       if (stepper[i]->distanceToGo() == 0) {
-        //        newPos += 10000;
-        stepper[i]->moveTo(-stepper[i]->currentPosition());
+        stepper[i]->setCurrentPosition(0);
+        stepper[i]->moveTo(100);
+        // stepper[i]->moveTo(-stepper[i]->currentPosition());
       }
       stepper[i]->run();
     }
@@ -188,7 +188,6 @@ void calibratePotentiometers() {
 
   for (int i = 0; i < 2; i++) {
     PotRead[i] = analogRead(PotentiometerPin[i]);
-    //    printf("[t=%d] POT[%d] = %d [min: %d max %d\n", millis(), i, PotRead[i], potMin[i], potMax[i]);    
   }
 
   for (int i = 0; i < MAX_POTS; i++) {
