@@ -17,12 +17,13 @@
 #include <Wire.h>
 
 #define MAX_POTS 2
+FILE serial_stdout;
 
 /* LCD pins depend on physical configuration */
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
 /* Analog IO pins */
-int PotentiometerPin[] = { A0, A1 }; // Potentiometer values (analog)
+int PotentiometerPin[] = {A0, A1}; // Potentiometer values (analog)
 
 /* Placeholders to store calibrated min/max of potentiometers */
 int potMax[] = {1, 1};
@@ -30,7 +31,7 @@ int potMin[] = {100, 100};
 
 /* */
 int PotRead[MAX_POTS];
-int stepperSpeed[MAX_POTS];
+float stepperSpeed[MAX_POTS];
 
 /* Digital IO pins */
 int SysSwitch = 6; // Pin for system toggle switch, motors on/off (digital)
@@ -44,15 +45,16 @@ int SysPrev = HIGH,
     DirPrev = LOW; // Default direction for two motors is both forward.
 
 int SysRead, DirRead;
-int calibrationTime = 7500; // Startup calibration time before main loop (ms)
+int calibrationTime = 10000; // Startup calibration time before main loop (ms)
 
-int stepperSteps = 200; // Physical value of the stepper motor
-float max_v = 100.0;    // Maximum stepper motor velocity (steps)
-float max_a = 100.0;    // Maximum stepper motor acceleration (steps)
+float stepperSteps = 200.0; // Physical value of the stepper motor
+int newPos = 1000;
+float max_v = 200.0;    // Maximum stepper motor velocity (steps)
+float max_a = 10000.0;    // Maximum stepper motor acceleration (steps)
+
+long int timeout = calibrationTime + 1000;
 
 ResponsiveAnalogRead *pot[MAX_POTS];
-//L(PotPinL, true);
-//ResponsiveAnalogRead potR(PotPinR, true);
 
 Adafruit_MotorShield AFMSbot(0x61);
 Adafruit_MotorShield AFMStop(0x60);
@@ -61,15 +63,13 @@ Adafruit_MotorShield AFMStop(0x60);
  * only use AFMStop, which is the top shield. If stacking multiple motor
  * shields, remember to map the steppers to the approapriate shield.
  */
-Adafruit_StepperMotor *myStepper[] = {
-  AFMStop.getStepper(200, 1),
-  AFMStop.getStepper(200, 2)
-};
+Adafruit_StepperMotor *myStepper[] = {AFMStop.getStepper(200, 1),
+                                      AFMStop.getStepper(200, 2)};
 
-void forwardStep0() { myStepper[0]->onestep(FORWARD, DOUBLE); }
-void forwardStep1() { myStepper[0]->onestep(FORWARD, DOUBLE); }
-void backwardStep0() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
-void backwardStep1() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
+void forwardStep0() { myStepper[0]->onestep(FORWARD, SINGLE); }
+void forwardStep1() { myStepper[1]->onestep(FORWARD, SINGLE); }
+void backwardStep0() { myStepper[0]->onestep(BACKWARD, SINGLE); }
+void backwardStep1() { myStepper[1]->onestep(BACKWARD, SINGLE); }
 
 AccelStepper *stepper[MAX_POTS];
 
@@ -85,7 +85,7 @@ void loop() {
    * It stores the last few values and eliminates circuit noise from analogue
    * values.
    */
-  for (int i=0; i<MAX_POTS; i++) {
+  for (int i = 0; i < MAX_POTS; i++) {
     pot[i]->update();
   }
 
@@ -121,55 +121,59 @@ void loop() {
   }
   DirPrev = DirRead;
 
-  /*
-   * Read and display current potentiometer values on LCD.
-   * Values are cutoff to be between 0 and 99.
-   */
-  for (int i=0; i<MAX_POTS; i++) {
+
+  for (int i = 0; i < MAX_POTS; i++) {
+    /*
+     * Read and display current potentiometer values on LCD.
+     * Values are cutoff to be between 0 and 200.
+     */
     // Remaps min/max potentiometer values to stepper steps
     PotRead[i] = map(pot[i]->getValue(), potMin[i], potMax[i], 1, max_v);
 
     // In case sensor value is out of range, constrain it.
     PotRead[i] = constrain(PotRead[i], 1, max_v);
-
-    // speed() returns steps/second, convert to RPM:
-    stepperSpeed[i] = (stepper[i]->speed() / stepperSteps) * 60;    
-  }
-
-  /* TODO: 
-   *  fix this using a struct to store positions of cursors for each
-   *  stepper 
-   */ 
-  /* lcd.setCursor(1, 1); */
-  /* lcd.print("  "); */
-  /* lcd.setCursor(1, 1); */
-  /* lcd.print(stepperLSpeed); */
-  /* lcd.setCursor(10, 1); */
-  /* lcd.print("  "); */
-  /* lcd.setCursor(10, 1); */
-  /* lcd.print(stepperRSpeed); */
-
-  printArrows(direction);
-
-  for (int i = 0; i<MAX_POTS; i++) {
-
+    PotRead[i] = (float) round_up( (int) PotRead[i], 5);
+    
+    // speed() returns steps/second, converted to RPM:
+    stepperSpeed[i] = ( (float)PotRead[i] / stepperSteps) * 60.0;
+    
     if (SysState == LOW) {
       stepper[i]->setSpeed(0);
     } else {
+      stepper[i]->setSpeed((int)stepperSpeed[i]);
       if (stepper[i]->distanceToGo() == 0) {
+        //        newPos += 10000;
         stepper[i]->moveTo(-stepper[i]->currentPosition());
       }
       stepper[i]->run();
-
-      for (int i=0; i<MAX_POTS; i++) {
-        if (PotRead[i] <= 1) {
-          stepper[i]->setSpeed(0);
-        }
-      }
-
     }
+    if (PotRead[i] <= 1) {
+      stepper[i]->setSpeed(0);
+    }
+    
+
   }
 
+  /* TODO:
+   *  fix this using a struct to store positions of cursors for each
+   *  stepper
+   */
+  lcd.setCursor(0, 1); lcd.print("    ");
+  lcd.setCursor(0, 1); lcd.print(PotRead[1]);
+  lcd.setCursor(9, 1); lcd.print("    ");
+  lcd.setCursor(9, 1); lcd.print(PotRead[0]);
+
+  printArrows(direction);
+
+  if (millis() > timeout) {
+    for (int i=0; i<MAX_POTS; i++) {
+      printf("Time:%ld POT:%d Min:%d Max:%d CurrentPotValue:%d CurrentSpeed:",
+             millis(), i,potMin[i], potMax[i], PotRead[i]);
+      Serial.print(stepper[i]->speed());
+      printf("\n");
+    }
+    timeout = millis() + 2000;
+  }
   
 }
 
@@ -179,25 +183,18 @@ void loop() {
 void calibratePotentiometers() {
   lcd.setCursor(0, 0);
   lcd.print("CALIBRATION");
-  PotRead[MAX_POTS];
+  lcd.setCursor(12,0);
+  lcd.print( (int) ((calibrationTime - millis())/1000) );
 
-  for (int i=0; i<MAX_POTS; i++) {
+  for (int i = 0; i < 2; i++) {
     PotRead[i] = analogRead(PotentiometerPin[i]);
+    //    printf("[t=%d] POT[%d] = %d [min: %d max %d\n", millis(), i, PotRead[i], potMin[i], potMax[i]);    
   }
 
-  for (int i=0; i<MAX_POTS; i++) {  
+  for (int i = 0; i < MAX_POTS; i++) {
     if (PotRead[i] > potMax[i]) {
       potMax[i] = PotRead[i];
     }
-
-    if (PotRead[i] < potMin[i]) {
-      potMin[i] = PotRead[i];
-    }
-
-    if (PotRead[i] > potMax[i]) {
-      potMax[i] = PotRead[i];
-    }
-
     if (PotRead[i] < potMin[i]) {
       potMin[i] = PotRead[i];
     }

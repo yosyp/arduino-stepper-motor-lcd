@@ -42,6 +42,9 @@ If using a external power source for the stepper motors, you can increase the ma
 ```
 arduino --upload main.ino
 ```
+```
+cu -l /dev/ttyACM0 -s 57600
+```
 
 ### Resources
 

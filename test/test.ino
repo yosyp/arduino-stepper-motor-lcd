@@ -17,39 +17,40 @@ Adafruit_MotorShield AFMStop(0x60); // Default address, no jumpers
 
 // Connect two steppers with 200 steps per revolution (1.8 degree)
 // to the top shield
-Adafruit_StepperMotor *myStepperL = AFMStop.getStepper(200, 1);
-Adafruit_StepperMotor *myStepper2 = AFMStop.getStepper(200, 2);
+Adafruit_StepperMotor *myStepper[] = {
+  AFMStop.getStepper(200, 1),
+  AFMStop.getStepper(200, 2)
+};
 
 // Connect one stepper with 200 steps per revolution (1.8 degree)
 // to the bottom shield
 
 // you can change these to DOUBLE or INTERLEAVE or MICROSTEP!
 // wrappers for the first motor!
-void forwardstep1() { myStepperL->onestep(FORWARD, DOUBLE); }
-void backwardstep1() { myStepperL->onestep(BACKWARD, DOUBLE); }
+void forwardstep1() { myStepper[0]->onestep(FORWARD, DOUBLE); }
+void backwardstep1() { myStepper[0]->onestep(BACKWARD, DOUBLE); }
 // wrappers for the second motor!
-void forwardstep2() { myStepper2->onestep(FORWARD, DOUBLE); }
-void backwardstep2() { myStepper2->onestep(BACKWARD, DOUBLE); }
+void forwardstep2() { myStepper[1]->onestep(FORWARD, DOUBLE); }
+void backwardstep2() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
 // wrappers for the third motor!
 
 // Now we'll wrap the 3 steppers in an AccelStepper object
-AccelStepper stepperL(forwardstep1, backwardstep1);
-AccelStepper stepper2(forwardstep2, backwardstep2);
+AccelStepper *stepper[2];
 
 void setup() {
-
   pinMode(6, INPUT);
 
+  stepper[0] = new AccelStepper(forwardstep1,backwardstep1);
+  stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
+  
+  for (int i=0;i<2;i++) {
+    stepper[i]->setMaxSpeed(100.0);
+    stepper[i]->setAcceleration(100.0);
+    stepper[i]->moveTo(24);
+  }        
+  
   AFMSbot.begin(); // Start the bottom shield
   AFMStop.begin(); // Start the top shield
-
-  stepperL.setMaxSpeed(100.0);
-  stepperL.setAcceleration(100.0);
-  stepperL.moveTo(24);
-
-  stepper2.setMaxSpeed(100.0);
-  stepper2.setAcceleration(100.0);
-  stepper2.moveTo(50000);
 }
 
 void loop() {
@@ -57,17 +58,17 @@ void loop() {
   int sys = digitalRead(6);
 
   // Change direction at the limits
-  if (stepperL.distanceToGo() == 0)
-    stepperL.moveTo(-stepperL.currentPosition());
+  if (stepper[0]->distanceToGo() == 0)
+    stepper[0]->moveTo(-stepper[0]->currentPosition());
 
-  if (stepper2.distanceToGo() == 0)
-    stepper2.moveTo(-stepper2.currentPosition());
+  if (stepper[1]->distanceToGo() == 0)
+    stepper[1]->moveTo(-stepper[1]->currentPosition());
 
   if (sys == HIGH) {
-    stepperL.run();
-    stepper2.run();
+    stepper[0]->run();
+    stepper[1]->run();
   } else {
-    stepperL.setSpeed(0);
-    stepper2.setSpeed(0);
+    stepper[0]->setSpeed(0);
+    stepper[1]->setSpeed(0);
   }
 }
