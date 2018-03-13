@@ -23,7 +23,7 @@ FILE serial_stdout;
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
 /* Analog IO pins */
-int PotentiometerPin[] = {A0, A1}; // Potentiometer values (analog)
+int PotentiometerPin[] = {A1, A0}; // Potentiometer values (analog)
 
 /* Placeholders to store calibrated min/max of potentiometers */
 int potMax[] = {1, 1};
@@ -73,19 +73,10 @@ void backwardStep1() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
 AccelStepper *stepper[MAX_POTS];
 
 void loop() {
-
+  
   // Calibrate the potentiometers by manually finding min/max values
   while (millis() < calibrationTime) {
     calibratePotentiometers();
-  }
-
-  /*
-   * Update the Responsive AnalogRead objects at every loop.
-   * It stores the last few values and eliminates circuit noise from analogue
-   * values.
-   */
-  for (int i = 0; i < MAX_POTS; i++) {
-    pot[i]->update();
   }
 
   /*
@@ -120,26 +111,48 @@ void loop() {
   }
   DirPrev = DirRead;
 
+  /* int sys = digitalRead(6); */
+
+  /* for (int i=0; i<2; i++) { */
+  /*   if (stepper[i]->distanceToGo() == 0) { */
+  /*     stepper[i]->setCurrentPosition(0); */
+  /*     stepper[i]->moveTo(100); */
+  /*   } */
+  /*   if (sys == HIGH) { */
+  /*     stepper[i]->run(); */
+  /*   } else { */
+  /*     stepper[i]->setSpeed(0); */
+  /*   } */
+  /* } */
+
 
   for (int i = 0; i < MAX_POTS; i++) {
+    /*
+     * Update the Responsive AnalogRead objects at every loop.
+     * It stores the last few values and eliminates circuit noise from analogue
+     * values.
+     */
+    //    pot[i]->update();
+
     /*
      * Read and display current potentiometer values on LCD.
      * Values are cutoff to be between 0 and 200.
      */
     // Remaps min/max potentiometer values to stepper steps
-    PotRead[i] = map(pot[i]->getValue(), potMin[i], potMax[i], 1, max_v);
-
+    PotRead[i] = map(analogRead(PotentiometerPin[i]), potMin[i], potMax[i], 1, max_v);
+    //    PotRead[i] = pot[i]->getValue();
     // In case sensor value is out of range, constrain it.
-    PotRead[i] = constrain(PotRead[i], 1, max_v);
-    PotRead[i] = (float) round_up( (int) PotRead[i], 5);
+    PotRead[i] = constrain(PotRead[i], 1, (int)max_v);
+    PotRead[i] = round_up(PotRead[i], 5);
     
     // speed() returns steps/second, converted to RPM:
-    stepperSpeed[i] = ( (float)PotRead[i] / stepperSteps) * 60.0;
-    
+    stepperSpeed[i] = ((float)PotRead[i] / (float)stepperSteps) * 60.0;
+
     if (SysState == LOW) {
       stepper[i]->setSpeed(0);
     } else {
-      //stepper[i]->setSpeed((int)stepperSpeed[i]);
+     stepper[i]->setSpeed(PotRead[i]);
+     //      stepper[i]->setSpeed(10000.0);      
       if (stepper[i]->distanceToGo() == 0) {
         stepper[i]->setCurrentPosition(0);
         stepper[i]->moveTo(100);
@@ -150,29 +163,27 @@ void loop() {
     if (PotRead[i] <= 1) {
       stepper[i]->setSpeed(0);
     }
-    
-
-  }
-
+   }
+  
   /* TODO:
    *  fix this using a struct to store positions of cursors for each
    *  stepper
    */
-  lcd.setCursor(0, 1); lcd.print("    ");
-  lcd.setCursor(0, 1); lcd.print(PotRead[1]);
-  lcd.setCursor(9, 1); lcd.print("    ");
-  lcd.setCursor(9, 1); lcd.print(PotRead[0]);
+    /* lcd.setCursor(0, 1); lcd.print("    "); */
+    /* lcd.setCursor(0, 1); lcd.print(PotRead[1]); */
+    /* lcd.setCursor(9, 1); lcd.print("    "); */
+    /* lcd.setCursor(9, 1); lcd.print(PotRead[0]); */
 
-  printArrows(direction);
+  /* printArrows(direction); */
 
-  if (millis() > timeout) {
+  if (millis()%250 == 0) {
     for (int i=0; i<MAX_POTS; i++) {
       printf("Time:%ld POT:%d Min:%d Max:%d CurrentPotValue:%d CurrentSpeed:",
              millis(), i,potMin[i], potMax[i], PotRead[i]);
       Serial.print(stepper[i]->speed());
       printf("\n");
     }
-    timeout = millis() + 2000;
+    //    timeout = millis() + 2000;
   }
   
 }

@@ -39,12 +39,13 @@ AccelStepper *stepper[2];
 
 void setup() {
   pinMode(6, INPUT);
+  pinMode(5, INPUT);
 
   stepper[0] = new AccelStepper(forwardstep1,backwardstep1);
   stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
   
   for (int i=0;i<2;i++) {
-    stepper[i]->setMaxSpeed(10000.0);
+    stepper[i]->setMaxSpeed(100.0);
     stepper[i]->setAcceleration(10000.0);
     stepper[i]->moveTo(14000000);
   }        
@@ -56,6 +57,7 @@ void setup() {
 void loop() {
 
   int sys = digitalRead(6);
+int sys2 = digitalRead(5);
 
   for (int i=0; i<2; i++) {
     if (stepper[i]->distanceToGo() == 0) {
@@ -63,6 +65,9 @@ void loop() {
       stepper[i]->moveTo(100);
     }
     if (sys == HIGH) {
+	if(sys2 == HIGH) {
+		stepper[i]->setSpeed(50.0);
+}
       stepper[i]->run();
     } else {
       stepper[i]->setSpeed(0);

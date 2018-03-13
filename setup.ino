@@ -4,7 +4,7 @@ int serial_putchar(char c, FILE* f) {
 }
 
 void setup() {
-  Serial.begin(57600);
+   Serial.begin(57600);
   //  TWBR = ((F_CPU / 400000l) - 16) / 2; // Change the i2c clock to 400KHz
 
   fdev_setup_stream(&serial_stdout, serial_putchar, NULL, _FDEV_SETUP_WRITE);
@@ -53,6 +53,6 @@ void setup() {
   lcd.print("rpm");
 }
 
-int round_up(int num, int factor) {
-    return num + factor - 1 - (num - 1) % factor;
+float round_up(float num, float factor) {
+  return num + factor - 1 - ((int)num - 1) % (int)factor;
 }
