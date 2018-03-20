@@ -10,6 +10,11 @@
  * Yosyp Schwab
  */
 
+/* TODO:
+ * - Implement CLI like this:
+      https://www.norwegiancreations.com/2018/02/creating-a-command-line-interface-in-arduinos-serial-monitor/ 
+ */ 
+
 #include <AccelStepper.h>
 #include <Adafruit_MotorShield.h>
 #include <Wire.h>
@@ -77,20 +82,12 @@ void loop() {
 
   for (int i = 0; i < MAX_POTS; i++) {
     /*
-     * Update the Responsive AnalogRead objects at every loop.
-     * It stores the last few values and eliminates circuit noise from analogue
-     * values.
-     */
-    //    pot[i]->update();
-
-    /*
      * Read and display current potentiometer values on LCD.
      * Values are cutoff to be between 0 and 200.
      */
     // Remaps min/max potentiometer values to stepper steps
-    PotRead[i] =
-        map(analogRead(PotentiometerPin[i]), potMin[i], potMax[i], 1, max_v);
-    //    PotRead[i] = pot[i]->getValue();
+    PotRead[i] = map(analogRead(PotentiometerPin[i]), potMin[i], potMax[i], 1, max_v);
+
     // In case sensor value is out of range, constrain it.
     PotRead[i] = constrain(PotRead[i], 1, (int)max_v);
     PotRead[i] = round_up(PotRead[i], 5);
