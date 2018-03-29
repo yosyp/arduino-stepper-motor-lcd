@@ -12,14 +12,16 @@
 #include <Adafruit_MotorShield.h>
 #include <Wire.h>
 
-Adafruit_MotorShield AFMSbot(0x61); // Rightmost jumper closed
-Adafruit_MotorShield AFMStop(0x60); // Default address, no jumpers
+Adafruit_MotorShield AFMSbot(0x60); // Rightmost jumper closed
+Adafruit_MotorShield AFMStop(0x61); // Default address, no jumpers
 
 // Connect two steppers with 200 steps per revolution (1.8 degree)
 // to the top shield
 Adafruit_StepperMotor *myStepper[] = {
+  AFMSbot.getStepper(200, 1),
+  AFMSbot.getStepper(200, 2),
   AFMStop.getStepper(200, 1),
-  AFMStop.getStepper(200, 2)
+  AFMStop.getStepper(200, 2)  
 };
 
 // Connect one stepper with 200 steps per revolution (1.8 degree)

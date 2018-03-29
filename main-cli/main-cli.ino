@@ -18,6 +18,12 @@
 #define STEPPER_NUM 4
 #define STEPPER_STEPS 200
 
+/*
+ *  setSpeed() requires input in steps/sec
+ *  To convert RPM to steps/sec = 
+ *      (200 steps/1 rotation) * (1 min / 60 sec) 
+ */
+
 Adafruit_MotorShield AFMSbot(0x61); // Rightmost jumper closed
 Adafruit_MotorShield AFMS1(0x60); // Default address, no jumpers
 Adafruit_MotorShield AFMS2(0x59); // Default address, no jumpers
