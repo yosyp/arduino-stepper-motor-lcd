@@ -45,8 +45,8 @@ void setup() {
   stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
   
   for (int i=0;i<2;i++) {
-    stepper[i]->setMaxSpeed(100.0);
-    stepper[i]->setAcceleration(10000.0);
+    stepper[i]->setMaxSpeed(10000.0);
+    stepper[i]->setAcceleration(1000000.0);
     stepper[i]->moveTo(14000000);
   }        
   
@@ -56,21 +56,14 @@ void setup() {
 
 void loop() {
 
-  int sys = digitalRead(6);
-int sys2 = digitalRead(5);
+      stepper[0]->setCurrentPosition(0);
+      stepper[0]->moveTo(100);
+      stepper[0]->setSpeed(10000.0);
+      stepper[0]->run();
 
-  for (int i=0; i<2; i++) {
-    if (stepper[i]->distanceToGo() == 0) {
-      stepper[i]->setCurrentPosition(0);
-      stepper[i]->moveTo(100);
-    }
-    if (sys == HIGH) {
-	if(sys2 == HIGH) {
-		stepper[i]->setSpeed(50.0);
-}
-      stepper[i]->run();
-    } else {
-      stepper[i]->setSpeed(0);
-    }
-  }
+      stepper[1]->setCurrentPosition(0);
+      stepper[1]->moveTo(100);
+      stepper[1]->setSpeed(10000.0);
+      stepper[1]->run();
+
 }

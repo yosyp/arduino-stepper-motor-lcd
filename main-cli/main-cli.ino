@@ -119,7 +119,7 @@ void setup() {
   for (int i=0;i<STEPPER_NUM;i++) {
     stepper[i]->setMaxSpeed(12000.0);
     stepper[i]->setAcceleration(10000.0);
-//    stepper[i]->moveTo(14000000);
+    stepper[i]->moveTo(14000000);
   }
 
   AFMSbot.begin(); // Start the bottom shield
@@ -132,24 +132,7 @@ void setup() {
 /************************** LOOP ******************************/
 void loop() {
   my_cli();
-
-  //  for (int i=0; i<2; i++) {
-  //    if (stepper[i]->distanceToGo() == 0) {
-  //      stepper[i]->setCurrentPosition(0);
-  //      stepper[i]->moveTo(100);
-  //    }
-  //    if (sys == HIGH) {
-  //  if(sys2 == HIGH) {
-  //    stepper[i]->setSpeed(50.0);
-  //}
-  //      stepper[i]->run();
-  //    } else {
-  //      stepper[i]->setSpeed(0);
-  //    }
-  //  }
 }
-
-
 
 /************** CLI FUNCTIONS ******************/
 void cli_init() {
@@ -161,18 +144,19 @@ void cli_init() {
 void my_cli() {
   Serial.print(F("> ")); delay(50);
 
-  read_line();
-  if (!error_flag) {
-    parse_line();
+  if(Serial.available() > 0) {
+    read_line();
+    if (!error_flag) {
+      parse_line();
+    }
+    if (!error_flag) {
+      execute();
+    }
+    memset(line, 0, LINE_BUF_SIZE);
+    memset(args, 0, sizeof(args[0][0]) * MAX_NUM_ARGS * ARG_BUF_SIZE);
+  
+    error_flag = false;    
   }
-  if (!error_flag) {
-    execute();
-  }
-
-  memset(line, 0, LINE_BUF_SIZE);
-  memset(args, 0, sizeof(args[0][0]) * MAX_NUM_ARGS * ARG_BUF_SIZE);
-
-  error_flag = false;
 }
 
 void read_line() {
@@ -275,6 +259,7 @@ int cmd_motor() {
 
   if( motor_speed >= 0 ) {
     if( motor_num < STEPPER_NUM && motor_num >= 0) {
+      stepper[motor_num]->setCurrentPosition(0);
       stepper[motor_num]->setSpeed(motor_speed * (float)STEPPER_STEPS);
       stepper[motor_num]->moveTo(14000000);    
       stepper[motor_num]->run();
@@ -308,6 +293,7 @@ int cmd_on() {
     else if(stepper[i]->speed() < (float)STEPPER_STEPS) {
       stepper[i]->setSpeed(STEPPER_STEPS);
     }
+    stepper[i]->setCurrentPosition(0);  
     stepper[i]->moveTo(14000000);    
     stepper[i]->run();
     Serial.print(F("! Motor #"));
@@ -332,40 +318,4 @@ int cmd_off() {
     Serial.println(F(" OFF"));
   }  
 }
-
-
-//int cmd_led(){
-//    if(strcmp(args[1], led_args[0]) == 0){
-//        Serial.println(F("Turning on the LED."));
-//        digitalWrite(LEDpin, HIGH);
-//    }
-//    else if(strcmp(args[1], led_args[1]) == 0){
-//        Serial.println(F("Turning off the LED."));
-//        digitalWrite(LEDpin, LOW);
-//    }
-//    else if(strcmp(args[1], led_args[2]) == 0){
-//        if(atoi(args[2]) > 0){
-//            Serial.print(F("Blinking the LED "));
-//            Serial.print(blink_cycles);
-//            Serial.print(F(" times at "));
-//            Serial.print(args[2]);
-//            Serial.println(F(" Hz."));
-//
-//            int delay_ms = (int)round(1000.0/atoi(args[2])/2);
-//
-//            for(int i=0; i<blink_cycles; i++){
-//                digitalWrite(LEDpin, HIGH);
-//                delay(delay_ms);
-//                digitalWrite(LEDpin, LOW);
-//                delay(delay_ms);
-//            }
-//        }
-//        else{
-//            Serial.println(F("Invalid frequency."));
-//        }
-//    }
-//    else{
-//        Serial.println(F("Invalid command. Type \"help led\" to see how to use the LED command."));
-//    }
-//}
 
