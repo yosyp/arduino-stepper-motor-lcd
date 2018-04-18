@@ -23,6 +23,7 @@
  *  To convert RPM to steps/sec = 
  *      (200 steps/1 rotation) * (1 min / 60 sec) 
  */
+ #define RPM_TO_STEP_SECS = (float)STEPPER_STEPS / 60f;
 
 Adafruit_MotorShield AFMSbot(0x61); // Rightmost jumper closed
 Adafruit_MotorShield AFMS1(0x60); // Default address, no jumpers
@@ -266,7 +267,7 @@ int cmd_motor() {
   if( motor_speed >= 0 ) {
     if( motor_num < STEPPER_NUM && motor_num >= 0) {
       stepper[motor_num]->setCurrentPosition(0);
-      stepper[motor_num]->setSpeed(motor_speed * (float)STEPPER_STEPS);
+      stepper[motor_num]->setSpeed(motor_speed * RPM_TO_STEP_SECS);
       stepper[motor_num]->moveTo(14000000);    
       stepper[motor_num]->run();
       
@@ -294,10 +295,10 @@ int cmd_on() {
   for(int i = 0; i<STEPPER_NUM; i++) {
     if (args[1]) {
       opt_speed = atof(args[1]);
-      stepper[i]->setSpeed(opt_speed * (float)STEPPER_STEPS);
+      stepper[i]->setSpeed(opt_speed * RPM_TO_STEP_SECS);
     } 
     else if(stepper[i]->speed() < (float)STEPPER_STEPS) {
-      stepper[i]->setSpeed(STEPPER_STEPS);
+      stepper[i]->setSpeed(1f * RPM_TO_STEP_SECS);
     }
     stepper[i]->setCurrentPosition(0);  
     stepper[i]->moveTo(14000000);    

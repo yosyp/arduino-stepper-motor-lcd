@@ -29,11 +29,11 @@ Adafruit_StepperMotor *myStepper[] = {
 
 // you can change these to DOUBLE or INTERLEAVE or MICROSTEP!
 // wrappers for the first motor!
-void forwardstep1() { myStepper[0]->onestep(FORWARD, DOUBLE); }
-void backwardstep1() { myStepper[0]->onestep(BACKWARD, DOUBLE); }
+void forwardstep1() { myStepper[0]->onestep(FORWARD, INTERLEAVE); }
+void backwardstep1() { myStepper[0]->onestep(BACKWARD, INTERLEAVE); }
 // wrappers for the second motor!
-void forwardstep2() { myStepper[1]->onestep(FORWARD, DOUBLE); }
-void backwardstep2() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
+void forwardstep2() { myStepper[1]->onestep(FORWARD, INTERLEAVE); }
+void backwardstep2() { myStepper[1]->onestep(BACKWARD, INTERLEAVE); }
 // wrappers for the third motor!
 
 // Now we'll wrap the 3 steppers in an AccelStepper object
@@ -59,13 +59,13 @@ void setup() {
 void loop() {
 
       stepper[0]->setCurrentPosition(0);
-      stepper[0]->moveTo(100);
-      stepper[0]->setSpeed(10000.0);
+      stepper[0]->moveTo(1000000);
+      stepper[0]->setSpeed(30.0);
       stepper[0]->run();
 
       stepper[1]->setCurrentPosition(0);
-      stepper[1]->moveTo(100);
-      stepper[1]->setSpeed(10000.0);
+      stepper[1]->moveTo(1000000);
+      stepper[1]->setSpeed(30.0);
       stepper[1]->run();
 
 }
