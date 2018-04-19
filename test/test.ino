@@ -35,9 +35,13 @@ void backwardstep1() { myStepper[0]->onestep(BACKWARD, INTERLEAVE); }
 void forwardstep2() { myStepper[1]->onestep(FORWARD, INTERLEAVE); }
 void backwardstep2() { myStepper[1]->onestep(BACKWARD, INTERLEAVE); }
 // wrappers for the third motor!
+void forwardstep3() { myStepper[2]->onestep(FORWARD, INTERLEAVE); }
+void backwardstep3() { myStepper[2]->onestep(BACKWARD, INTERLEAVE); }
 
+void forwardstep4() { myStepper[3]->onestep(FORWARD, INTERLEAVE); }
+void backwardstep4() { myStepper[3]->onestep(BACKWARD, INTERLEAVE); }
 // Now we'll wrap the 3 steppers in an AccelStepper object
-AccelStepper *stepper[2];
+AccelStepper *stepper[4];
 
 void setup() {
   pinMode(6, INPUT);
@@ -45,8 +49,10 @@ void setup() {
 
   stepper[0] = new AccelStepper(forwardstep1,backwardstep1);
   stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
+  stepper[2] = new AccelStepper(forwardstep3,backwardstep3);
+//  stepper[3] = new AccelStepper(forwardstep4,backwardstep4);
   
-  for (int i=0;i<2;i++) {
+  for (int i=0;i<3;i++) {
     stepper[i]->setMaxSpeed(10000.0);
     stepper[i]->setAcceleration(1000000.0);
     stepper[i]->moveTo(14000000);
@@ -65,7 +71,17 @@ void loop() {
 
       stepper[1]->setCurrentPosition(0);
       stepper[1]->moveTo(1000000);
-      stepper[1]->setSpeed(30.0);
+      stepper[1]->setSpeed(45.0);
       stepper[1]->run();
+
+      stepper[2]->setCurrentPosition(0);
+      stepper[2]->moveTo(1000000);
+      stepper[2]->setSpeed(45.0);
+      stepper[2]->run();
+
+//      stepper[3]->setCurrentPosition(0);
+//      stepper[3]->moveTo(1000000);
+//      stepper[3]->setSpeed(45.0);
+//      stepper[3]->run();
 
 }
