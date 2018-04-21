@@ -75,7 +75,28 @@ AccelStepper *stepper[3];
 
 void setup()
 {
+  Serial.begin(9600);
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 2; ++j)
+      pinMode(buttonPin[i][j], INPUT);
 
+  lcd.begin(16, 2);   // set up the LCD's number of columns and rows:
+  lcd.setCursor(0, 0);
+  lcd.print("M1   M2   M3  M4");
+
+  stepper[0] = new AccelStepper(forwardstep1,backwardstep1);
+  stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
+  stepper[2] = new AccelStepper(forwardstep3,backwardstep3);
+  
+  for (int i=0;i<STEPPERS;i++) {
+    stepper[i]->setMaxSpeed(10000.0);
+    stepper[i]->setAcceleration(1000000.0);
+    stepper[i]->moveTo(14000000);
+    stepper[i]->setSpeed(stepperSpeed[i]);    
+  }        
+  
+  AFMSbot.begin(); // Start the bottom shield
+  AFMStop.begin(); // Start the top shield  
 }
 
 void loop()
