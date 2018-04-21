@@ -14,6 +14,65 @@
 #include <Adafruit_MotorShield.h>
 #include <Wire.h>
 
+/******************* LCD Variables *******************************/
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 8, en = 9, d4 = 10, d5 = 11, d6 = 12, d7 = 13;
+char lcd_string[16];
+char serial_buf[50];
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+/******************** Pushbutton Variables *********************/
+const int buttonPin[4][2] = {
+  {4, 6},   // stepper 1 up/down button
+  {5, 7},   // stepper 2 up/down button    
+  {15, 17}, // stepper 3 up/down button (addressing A1 A3 analog pins as digital input)
+  {14, 16}  // stepper 4 up/down button (addressing A0 A2 analog pins as digital input)
+};
+
+float stepperSpeed[4] = {0, 0, 0, 0};
+
+const int debounceDelay = 50;
+unsigned int lastDebounceTime = 0;
+int buttonState[4][2];
+int lastButtonState[4][2] = {
+  {LOW, LOW},
+  {LOW, LOW},
+  {LOW, LOW},
+  {LOW, LOW}
+};
+
+/********************* Stepper Motor Setup ********************/
+int STEPPERS = 3;
+Adafruit_MotorShield AFMSbot(0x60); // Rightmost jumper closed
+Adafruit_MotorShield AFMStop(0x61); // Default address, no jumpers
+
+// Connect two steppers with 200 steps per revolution (1.8 degree)
+// to the top shield
+Adafruit_StepperMotor *myStepper[] = {
+  AFMSbot.getStepper(200, 1),
+  AFMSbot.getStepper(200, 2),
+  AFMStop.getStepper(200, 1),
+  AFMStop.getStepper(200, 2)  
+};
+
+// Connect one stepper with 200 steps per revolution (1.8 degree)
+// to the bottom shield
+
+// you can change these to DOUBLE or INTERLEAVE or MICROSTEP!
+// wrappers for the first motor!
+void forwardstep1() { myStepper[0]->onestep(FORWARD, DOUBLE); }
+void backwardstep1() { myStepper[0]->onestep(BACKWARD, DOUBLE); }
+// wrappers for the second motor!
+void forwardstep2() { myStepper[1]->onestep(FORWARD, DOUBLE); }
+void backwardstep2() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
+// wrappers for the third motor!
+void forwardstep3() { myStepper[2]->onestep(FORWARD, DOUBLE); }
+void backwardstep3() { myStepper[2]->onestep(BACKWARD, DOUBLE); }
+
+// Now we'll wrap the 3 steppers in an AccelStepper object
+AccelStepper *stepper[3];
+
 void setup()
 {
 
