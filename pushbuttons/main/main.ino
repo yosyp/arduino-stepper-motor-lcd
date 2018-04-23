@@ -101,7 +101,12 @@ void setup()
 
 void loop()
 {
-
+  for (int i=0; i < STEPPERS; ++i) {
+    stepper[i]->setCurrentPosition(0);
+    stepper[i]->moveTo(1000000);
+    stepper[i]->setSpeed(stepperSpeed[i]);
+    stepper[i]->run();
+  }
 }
 
 
