@@ -107,6 +107,44 @@ void loop()
     stepper[i]->setSpeed(stepperSpeed[i]);
     stepper[i]->run();
   }
+
+  int buttonReading[4][2];
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 2; ++j)
+    {
+      buttonReading[i][j] = digitalRead(buttonPin[i][j]);
+      if (buttonReading[i][j] != lastButtonState[i][j])
+        lastDebounceTime = millis();
+    }      
+          
+  if ((millis() - lastDebounceTime) > debounceDelay)
+    for (int i = 0; i < 4; ++i)
+      for (int j = 0; j < 2; ++j)
+      {
+        
+        if (buttonReading[i][j] != buttonState[i][j]) {
+          buttonState[i][j] = buttonReading[i][j];
+          if (buttonState[i][j] == HIGH) {
+            switch (j) {
+              case 0: if (stepperSpeed[i] < 99) stepperSpeed[i] = stepperSpeed[i] + float(1 * (1)); break;
+              case 1: if (stepperSpeed[i] > 0)  stepperSpeed[i] = stepperSpeed[i] - float(1 * (1)); break;
+            }    
+            stepper[i]->setSpeed(stepperSpeed[i]); stepper[i]->run();
+            sprintf(serial_buf,"EVENT: i=%d j=%d, stepperSpeed[%d]=%d\n",i,j,i,(int)stepperSpeed[i]);
+            Serial.print(serial_buf);
+            sprintf(lcd_string, "%02d   %02d   %02d  %02d",
+                    (int)stepperSpeed[0], (int)stepperSpeed[1], (int)stepperSpeed[2], (int)stepperSpeed[3]);   
+            lcd.setCursor(0, 1); lcd.print("                ");                         
+            lcd.setCursor(0, 1); lcd.print(lcd_string);
+          }
+        }
+
+      }
+  
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 2; ++j)
+      lastButtonState[i][j] = buttonReading[i][j];
+        
 }
 
 
