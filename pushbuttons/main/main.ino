@@ -43,7 +43,7 @@ int lastButtonState[4][2] = {
 };
 
 /********************* Stepper Motor Setup ********************/
-int STEPPERS = 3;
+int STEPPERS = 4;
 Adafruit_MotorShield AFMSbot(0x60); // Rightmost jumper closed
 Adafruit_MotorShield AFMStop(0x61); // Default address, no jumpers
 
