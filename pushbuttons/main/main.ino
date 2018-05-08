@@ -69,9 +69,12 @@ void backwardstep2() { myStepper[1]->onestep(BACKWARD, DOUBLE); }
 // wrappers for the third motor!
 void forwardstep3() { myStepper[2]->onestep(FORWARD, DOUBLE); }
 void backwardstep3() { myStepper[2]->onestep(BACKWARD, DOUBLE); }
+// wrappers for the fourth motor!
+void forwardstep4() { myStepper[3]->onestep(FORWARD, DOUBLE); }
+void backwardstep4() { myStepper[3]->onestep(BACKWARD, DOUBLE); }
 
-// Now we'll wrap the 3 steppers in an AccelStepper object
-AccelStepper *stepper[3];
+// Now we'll wrap the 4 steppers in an AccelStepper object
+AccelStepper *stepper[4];
 
 void setup()
 {
