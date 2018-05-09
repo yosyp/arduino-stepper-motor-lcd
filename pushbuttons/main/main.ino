@@ -43,7 +43,7 @@ int lastButtonState[4][2] = {
 };
 
 /********************* Stepper Motor Setup ********************/
-int STEPPERS = 4;
+int STEPPERS = 3;
 Adafruit_MotorShield AFMSbot(0x60); // Rightmost jumper closed
 Adafruit_MotorShield AFMStop(0x61); // Default address, no jumpers
 
@@ -90,6 +90,7 @@ void setup()
   stepper[0] = new AccelStepper(forwardstep1,backwardstep1);
   stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
   stepper[2] = new AccelStepper(forwardstep3,backwardstep3);
+  stepper[3] = new AccelStepper(forwardstep4,backwardstep4);
   
   for (int i=0;i<STEPPERS;i++) {
     stepper[i]->setMaxSpeed(10000.0);
