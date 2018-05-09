@@ -27,7 +27,7 @@ const int buttonPin[4][2] = {
   {4, 6},   // stepper 1 up/down button
   {5, 7},   // stepper 2 up/down button    
   {15, 17}, // stepper 3 up/down button (addressing A1 A3 analog pins as digital input)
-  {14, 16}  // stepper 4 up/down button (addressing A0 A2 analog pins as digital input)
+  {16, 14}  // stepper 4 up/down button (addressing A0 A2 analog pins as digital input)
 };
 
 float stepperSpeed[4] = {0, 0, 0, 0};
