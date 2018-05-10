@@ -105,11 +105,14 @@ void setup()
 
 void loop()
 {
-  for (int i=0; i < STEPPERS; ++i) {
-    stepper[i]->setCurrentPosition(0);
-    stepper[i]->moveTo(1000000);
-    stepper[i]->setSpeed(stepperSpeed[i]);
-    stepper[i]->run();
+  if ((millis() - lastUpdateTime) > updateTime) {
+    for (int i=0; i < STEPPERS; ++i) {
+      stepper[i]->setCurrentPosition(0);
+      stepper[i]->moveTo(1000000);
+      stepper[i]->setSpeed(stepperSpeed[i]);
+      stepper[i]->run();
+    }
+    lastUpdateTime = millis();
   }
 
   int buttonReading[4][2];
