@@ -27,7 +27,7 @@ const int buttonPin[4][2] = {
   {4, 6},   // stepper 1 up/down button
   {5, 7},   // stepper 2 up/down button    
   {15, 17}, // stepper 3 up/down button (addressing A1 A3 analog pins as digital input)
-  {16, 14}  // stepper 4 up/down button (addressing A0 A2 analog pins as digital input)
+  {14, 16}  // stepper 4 up/down button (addressing A0 A2 analog pins as digital input)
 };
 
 float stepperSpeed[4] = {0, 0, 0, 0};
@@ -43,6 +43,8 @@ int lastButtonState[4][2] = {
 };
 
 /********************* Stepper Motor Setup ********************/
+const int updateTime = 1000;
+unsigned int lastUpdateTime = 0;
 int STEPPERS = 3;
 Adafruit_MotorShield AFMSbot(0x60); // Rightmost jumper closed
 Adafruit_MotorShield AFMStop(0x61); // Default address, no jumpers
@@ -106,7 +108,8 @@ void setup()
 void loop()
 {
   if ((millis() - lastUpdateTime) > updateTime) {
-    for (int i=0; i < STEPPERS; ++i) {
+    for (int i=0; i < STEPPERS; ++i)
+    {
       stepper[i]->setCurrentPosition(0);
       stepper[i]->moveTo(1000000);
       stepper[i]->setSpeed(stepperSpeed[i]);
