@@ -23,6 +23,7 @@ char serial_buf[50];
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 /******************** Pushbutton Variables *********************/
+const int switchPin = 3;
 const int buttonPin[4][2] = {
   {4, 6},   // stepper 1 up/down button
   {5, 7},   // stepper 2 up/down button    
@@ -79,6 +80,7 @@ AccelStepper *stepper[4];
 void setup()
 {
   Serial.begin(9600);
+  pinMode(switchPin, INPUT);
   for (int i = 0; i < 4; ++i)
     for (int j = 0; j < 2; ++j)
       pinMode(buttonPin[i][j], INPUT);
@@ -105,13 +107,24 @@ void setup()
 
 void loop()
 {
+  int switchVal = digitalRead(switchPin);
+  if (switchVal == HIGH)
     for (int i=0; i < STEPPERS; ++i)
     {
       stepper[i]->setCurrentPosition(0);
       stepper[i]->moveTo(1000000);
       stepper[i]->setSpeed(stepperSpeed[i]);
       stepper[i]->run();
+    }  
+  else
+    for (int i=0; i < STEPPERS; ++i)
+    {
+      stepper[i]->setCurrentPosition(0);
+      stepper[i]->moveTo(0);
+      stepper[i]->setSpeed(0);
+      stepper[i]->run();
     }
+
 
   int buttonReading[4][2];
   for (int i = 0; i < 4; ++i)
