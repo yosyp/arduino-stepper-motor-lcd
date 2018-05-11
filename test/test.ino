@@ -50,9 +50,9 @@ void setup() {
   stepper[0] = new AccelStepper(forwardstep1,backwardstep1);
   stepper[1] = new AccelStepper(forwardstep2,backwardstep2);
   stepper[2] = new AccelStepper(forwardstep3,backwardstep3);
-//  stepper[3] = new AccelStepper(forwardstep4,backwardstep4);
+  stepper[3] = new AccelStepper(forwardstep4,backwardstep4);
   
-  for (int i=0;i<3;i++) {
+  for (int i=0;i<4;i++) {
     stepper[i]->setMaxSpeed(10000.0);
     stepper[i]->setAcceleration(1000000.0);
     stepper[i]->moveTo(14000000);
@@ -66,7 +66,7 @@ void loop() {
 
       stepper[0]->setCurrentPosition(0);
       stepper[0]->moveTo(1000000);
-      stepper[0]->setSpeed(30.0);
+      stepper[0]->setSpeed(45.0);
       stepper[0]->run();
 
       stepper[1]->setCurrentPosition(0);
@@ -79,9 +79,9 @@ void loop() {
       stepper[2]->setSpeed(45.0);
       stepper[2]->run();
 
-//      stepper[3]->setCurrentPosition(0);
-//      stepper[3]->moveTo(1000000);
-//      stepper[3]->setSpeed(45.0);
-//      stepper[3]->run();
+      stepper[3]->setCurrentPosition(0);
+      stepper[3]->moveTo(1000000);
+      stepper[3]->setSpeed(45.0);
+      stepper[3]->run();
 
 }

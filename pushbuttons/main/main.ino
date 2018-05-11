@@ -43,9 +43,7 @@ int lastButtonState[4][2] = {
 };
 
 /********************* Stepper Motor Setup ********************/
-const int updateTime = 1000;
-unsigned int lastUpdateTime = 0;
-int STEPPERS = 3;
+int STEPPERS = 4;
 Adafruit_MotorShield AFMSbot(0x60); // Rightmost jumper closed
 Adafruit_MotorShield AFMStop(0x61); // Default address, no jumpers
 
@@ -107,7 +105,6 @@ void setup()
 
 void loop()
 {
-  if ((millis() - lastUpdateTime) > updateTime) {
     for (int i=0; i < STEPPERS; ++i)
     {
       stepper[i]->setCurrentPosition(0);
@@ -115,8 +112,6 @@ void loop()
       stepper[i]->setSpeed(stepperSpeed[i]);
       stepper[i]->run();
     }
-    lastUpdateTime = millis();
-  }
 
   int buttonReading[4][2];
   for (int i = 0; i < 4; ++i)
